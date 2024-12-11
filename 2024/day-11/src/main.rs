@@ -1,31 +1,48 @@
 use std::collections::HashMap;
 
-fn change_stone(stone: usize) -> Vec<usize> {
+enum Stone {
+    Replaced(usize),
+    Splitted(usize, usize),
+}
+
+fn change_stone(stone: usize) -> Stone {
     if stone == 0 {
-        vec![1]
-    } else if stone.to_string().len() % 2 == 0 {
-        let chars = stone.to_string().chars().collect::<Vec<_>>();
-
-        let first_half = chars[..chars.len() / 2].iter().collect::<String>();
-        let second_half = chars[chars.len() / 2..].iter().collect::<String>();
-
-        vec![first_half.parse().unwrap(), second_half.parse().unwrap()]
-    } else {
-        vec![stone * 2024]
+        return Stone::Replaced(1);
     }
+
+    let num_digits = stone.ilog10() as usize + 1;
+    if num_digits % 2 == 0 {
+        let mid = num_digits / 2;
+
+        let divisor = 10_usize.pow(mid as u32);
+        let first_stone = stone / divisor;
+        let second_stone = stone % divisor;
+
+        return Stone::Splitted(first_stone, second_stone);
+    }
+
+    Stone::Replaced(stone * 2024)
 }
 
 fn solve(mut stones: HashMap<usize, usize>, blinks: usize) -> usize {
-    for _ in 0..blinks {
-        let mut new_stones = HashMap::new();
+    let mut new_stones = HashMap::new();
 
+    for _ in 0..blinks {
         for (stone, amount) in stones {
-            for new_stone in change_stone(stone) {
-                *new_stones.entry(new_stone).or_insert(0) += amount;
+            let new_stone = change_stone(stone);
+            match new_stone {
+                Stone::Replaced(replacement) => {
+                    *new_stones.entry(replacement).or_insert(0) += amount;
+                }
+                Stone::Splitted(first_stone, second_stone) => {
+                    *new_stones.entry(first_stone).or_insert(0) += amount;
+                    *new_stones.entry(second_stone).or_insert(0) += amount;
+                }
             }
         }
 
-        stones = new_stones;
+        stones = new_stones.clone();
+        new_stones.clear();
     }
 
     stones.values().sum()
