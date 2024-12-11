@@ -28,7 +28,7 @@ fn solve(mut stones: HashMap<usize, usize>, blinks: usize) -> usize {
     let mut new_stones = HashMap::new();
 
     for _ in 0..blinks {
-        for (stone, amount) in stones {
+        for (&stone, &amount) in &stones {
             let new_stone = change_stone(stone);
             match new_stone {
                 Stone::Replaced(replacement) => {
@@ -41,7 +41,7 @@ fn solve(mut stones: HashMap<usize, usize>, blinks: usize) -> usize {
             }
         }
 
-        stones = new_stones.clone();
+        std::mem::swap(&mut stones, &mut new_stones);
         new_stones.clear();
     }
 
