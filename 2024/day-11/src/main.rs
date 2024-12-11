@@ -5,63 +5,47 @@ fn change_stone(stone: usize) -> Vec<usize> {
         vec![1]
     } else if stone.to_string().len() % 2 == 0 {
         let chars = stone.to_string().chars().collect::<Vec<_>>();
+
         let first_half = chars[..chars.len() / 2].iter().collect::<String>();
         let second_half = chars[chars.len() / 2..].iter().collect::<String>();
-        return vec![first_half.parse().unwrap(), second_half.parse().unwrap()];
+
+        vec![first_half.parse().unwrap(), second_half.parse().unwrap()]
     } else {
         vec![stone * 2024]
     }
+}
+
+fn solve(mut stones: HashMap<usize, usize>, blinks: usize) -> usize {
+    for _ in 0..blinks {
+        let mut new_stones = HashMap::new();
+
+        for (stone, amount) in stones {
+            for new_stone in change_stone(stone) {
+                *new_stones.entry(new_stone).or_insert(0) += amount;
+            }
+        }
+
+        stones = new_stones;
+    }
+
+    stones.values().sum()
 }
 
 fn main() {
     // Part 1
     let input = std::fs::read_to_string("input.txt").unwrap();
 
-    let mut stones = input
+    let mut stones = HashMap::new();
+
+    for stone in input
         .split_ascii_whitespace()
         .map(|line| line.parse::<usize>().unwrap())
-        .collect::<Vec<_>>();
-
-    for _ in 0..25 {
-        let mut new_stones = Vec::new();
-
-        for stone in stones {
-            new_stones.append(&mut change_stone(stone));
-        }
-
-        stones = new_stones;
+    {
+        *stones.entry(stone).or_insert(0) += 1;
     }
 
-    println!("{}", stones.len());
+    println!("{}", solve(stones.clone(), 25));
 
     // Part 2
-    let input = std::fs::read_to_string("input.txt").unwrap();
-
-    let stones = input
-        .split_ascii_whitespace()
-        .map(|line| line.parse::<usize>().unwrap())
-        .collect::<Vec<_>>();
-
-    let mut ans = 0;
-
-    for stone in stones {
-        let mut stone_counts: HashMap<usize, usize> = HashMap::new();
-        stone_counts.insert(stone, 1);
-
-        for _ in 0..75 {
-            let mut new_counts = HashMap::new();
-
-            for (&stone, &count) in &stone_counts {
-                for new_stone in change_stone(stone) {
-                    *new_counts.entry(new_stone).or_insert(0) += count;
-                }
-            }
-
-            stone_counts = new_counts;
-        }
-
-        ans += stone_counts.values().sum::<usize>();
-    }
-
-    println!("{}", ans);
+    println!("{}", solve(stones, 75));
 }
